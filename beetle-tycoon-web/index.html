@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Beetle Tycoon</title>
+<script>window.BEETLE_PLATFORM='web';window.BEETLE_SERVER='https://beetle-tycoon.beetletycoon.workers.dev'</script>
+<style>
+@font-face{font-family:Lilita;src:url(fonts/lilita.woff2) format('woff2');font-display:block}
+@font-face{font-family:Nunito;font-weight:800;src:url(fonts/nunito800.woff2) format('woff2')}
+@font-face{font-family:Nunito;font-weight:900;src:url(fonts/nunito900.woff2) format('woff2')}
+:root{--ink:#24304a;--card:#fffaf0;--green:#3fbf58;--gold:#ffc83a}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;overflow:hidden;background:#7cc35a;font-family:Nunito,system-ui,sans-serif;font-weight:800;color:var(--ink);user-select:none;-webkit-user-select:none;touch-action:none}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+.disp{font-family:Lilita,Nunito,sans-serif;font-weight:400;letter-spacing:.5px}
+#ui{position:fixed;inset:0;pointer-events:none}
+#ui>*{pointer-events:auto}
+/* HUD */
+#hud{position:absolute;left:14px;top:12px;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.pill{background:rgba(20,30,50,.72);color:#fff;border-radius:16px;padding:6px 14px 6px 10px;display:flex;align-items:center;gap:8px;backdrop-filter:blur(4px);box-shadow:0 3px 0 rgba(0,0,0,.25)}
+#money{font-size:30px;color:#7dff8d;text-shadow:0 2px 0 #0a5a1a}
+#money .coin{width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff6a8,#ffc83a 45%,#d48a00);display:grid;place-items:center;color:#8a5200;font-size:18px;text-shadow:none;box-shadow:inset 0 -2px 0 rgba(0,0,0,.2)}
+#income{font-size:17px;color:#e6ffe9;align-self:flex-start}
+#lockPill{font-size:15px;align-self:flex-start}
+#lockPill.on{background:rgba(255,190,40,.9);color:#5a3a00}
+#mult{font-size:14px;align-self:flex-start;color:#ffe38a}
+#spawnPill{font-size:14px;align-self:flex-start;color:#ffe9b0}
+#giftPill{font:inherit;font-size:14px;align-self:flex-start;border:0;cursor:pointer;pointer-events:auto}
+#giftPill.ready{background:#ff4d8d;animation:pulse .6s infinite alternate}
+#hud{pointer-events:none}#hud #giftPill{pointer-events:auto}
+.task{display:flex;align-items:center;gap:10px;background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:8px;box-shadow:0 3px 0 #e6dcc6}
+.task .t{flex:1;min-width:0}.task b{display:block;font-size:15px}.task span{font-size:12px;color:#6b7488}
+.fuseGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:12px}
+.fz{border:3px solid transparent;border-radius:14px;background:#fff;padding:8px;text-align:left;font:inherit;cursor:pointer;box-shadow:0 3px 0 #e6dcc6}
+.fz b{display:block;font-size:13px}.fz span{font-size:12px;color:#1f9a3a}.fz.on{border-color:#9b5cff;background:#f6efff}
+.fuseSum{text-align:center;margin:6px 0 12px;font-size:15px}
+.fusePrev{background:#f6efff;border:3px solid #c9a6ff;border-radius:16px;padding:10px 12px;text-align:center;margin-bottom:6px;font-size:14px}
+.fusePrev .big{font-family:Lilita;font-size:24px;line-height:1.1}
+.fusePrev small{display:block;color:#6b7488;margin-top:4px}
+.recipes{background:#fff;border-radius:12px;padding:8px 12px;margin:0 0 12px;font-size:13px;box-shadow:0 3px 0 #e6dcc6}
+.recipes summary{cursor:pointer;font-size:14px}.recipes div{margin-top:4px}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{background:#fff;border-radius:12px;padding:8px 4px;text-align:center;font-size:12px;box-shadow:0 3px 0 #e6dcc6;color:#6b7488}
+.day b{display:block;font-size:13px;color:var(--ink)}.day .e{font-size:22px;display:block}
+.day.got{opacity:.5}.day.today{outline:3px solid #3fbf58;color:var(--ink)}
+#side{position:absolute;right:12px;bottom:16px;display:flex;flex-direction:column;gap:10px}
+@media (max-height:540px){body:not(.touch) #lb .r{display:none}body:not(.touch) #side{gap:6px}body:not(.touch) .sbtn{width:58px;height:58px}}
+.sbtn{width:68px;height:68px;border-radius:20px;border:0;background:#fff;box-shadow:0 5px 0 #b9c3d6,0 8px 14px rgba(0,0,0,.18);font:inherit;color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;font-size:11px;position:relative;transition:transform .08s}
+.sbtn:active{transform:translateY(3px);box-shadow:0 2px 0 #b9c3d6}
+.sbtn .ic{font-size:28px;line-height:1}
+.sbtn.shop{background:#ffe066;box-shadow:0 5px 0 #d4a414,0 8px 14px rgba(0,0,0,.18)}
+.sbtn.reb{background:#e2c7ff;box-shadow:0 5px 0 #9e72d6,0 8px 14px rgba(0,0,0,.18)}
+.sbtn .badge{position:absolute;top:-6px;right:-6px;background:#ff4d6d;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px}
+#topc{position:absolute;left:50%;top:10px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;width:min(560px,70vw)}
+#event{background:linear-gradient(90deg,#5b6cff,#b66bff);color:#fff;border-radius:16px;padding:6px 16px;font-size:18px;text-align:center;box-shadow:0 3px 0 rgba(0,0,0,.25)}
+#event small{display:block;font-size:12px;opacity:.9;font-family:Nunito;font-weight:800}
+#alert{background:#ff3d5a;color:#fff;border-radius:14px;padding:8px 16px;font-size:18px;animation:pulse .6s infinite alternate;box-shadow:0 3px 0 #a3132b;text-align:center}
+@keyframes pulse{to{transform:scale(1.05)}}
+#tut{background:#fffaf0;border-radius:16px;padding:8px 16px;font-size:16px;box-shadow:0 4px 0 #d9cdb3;text-align:center;max-width:100%}
+#tut b{color:#e0681a}
+#toasts{position:absolute;left:50%;top:32%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
+.toast{background:rgba(20,30,50,.85);color:#fff;padding:8px 18px;border-radius:14px;font-size:18px;animation:tin .25s ease-out;white-space:nowrap}
+.toast.big{font-family:Lilita;font-weight:400;font-size:34px;background:none;text-shadow:0 3px 0 rgba(0,0,0,.4),0 0 18px rgba(0,0,0,.25)}
+@keyframes tin{from{transform:translateY(10px) scale(.9);opacity:0}}
+#prompt{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);background:#fff;border-radius:18px;padding:10px 18px 10px 10px;display:flex;align-items:center;gap:10px;font-size:19px;box-shadow:0 5px 0 #b9c3d6,0 8px 18px rgba(0,0,0,.2);border:0;font-family:inherit;color:var(--ink);cursor:pointer;white-space:nowrap}
+#prompt .key{background:var(--ink);color:#fff;border-radius:10px;min-width:36px;height:36px;display:grid;place-items:center;font-size:18px;padding:0 8px}
+#prompt.buy .key{background:var(--green)} #prompt.steal .key{background:#ff4d6d} #prompt.sell .key{background:#ff9f1a}
+#prompt .price{color:#1f9a3a} #prompt.no .price{color:#d23b3b}
+#floats{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.fl{position:absolute;font-family:Lilita;font-size:26px;color:#7dff8d;text-shadow:0 2px 0 #0a5a1a,0 0 8px rgba(0,0,0,.35);transform:translate(-50%,-50%);animation:flup 1.1s ease-out forwards;white-space:nowrap}
+@keyframes flup{to{transform:translate(-50%,-180%);opacity:0}}
+.fl.collect{font-size:34px}
+.arrowInd{position:absolute;width:46px;height:46px;margin:-23px 0 0 -23px;pointer-events:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
+/* mobile */
+#joy{position:absolute;left:0;bottom:0;width:50%;height:60%;touch-action:none}
+#joyBase{position:absolute;width:130px;height:130px;margin:-65px 0 0 -65px;border-radius:50%;background:rgba(255,255,255,.22);border:3px solid rgba(255,255,255,.5);pointer-events:none}
+#joyKnob{position:absolute;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;background:rgba(255,255,255,.85);pointer-events:none;box-shadow:0 3px 8px rgba(0,0,0,.25)}
+#jumpBtn{position:absolute;right:22px;bottom:30px;width:74px;height:74px;border-radius:50%;border:0;background:rgba(255,255,255,.85);font-size:30px;box-shadow:0 5px 0 rgba(0,0,0,.2)}
+body.touch #prompt{bottom:auto;top:auto;bottom:120px}
+body.touch #side{top:auto;bottom:118px;transform:none}
+@media (orientation:landscape) and (max-height:560px){body.touch #side{bottom:10px;right:108px;flex-direction:row;gap:6px}body.touch #lb.min .r{display:none}body.touch #lb{min-width:0}body.touch #topc{width:40vw}body.touch #tut{font-size:12px;padding:6px 10px}body.touch #hud .pill{font-size:12px;padding:3px 9px}body.touch #money{font-size:20px!important}body.touch #mult{display:none!important}}
+body.touch .sbtn{width:54px;height:54px;font-size:10px;border-radius:16px}
+@media (orientation:portrait){body #lb{top:auto;bottom:212px;left:12px;right:auto;min-width:0;font-size:11px;padding:5px 8px}body.touch #side{bottom:128px;gap:7px}#hud .pill{font-size:13px;padding:4px 10px}#money{font-size:22px!important}#mult{display:none!important}#tut{font-size:13px}#topc{top:200px;width:92vw}}
+body.touch .sbtn .ic{font-size:24px}
+/* modals */
+.modal{position:absolute;inset:0;background:rgba(15,25,45,.55);display:grid;place-items:center;padding:16px;animation:fin .15s}
+@keyframes fin{from{opacity:0}}
+.card{background:var(--card);border-radius:24px;box-shadow:0 8px 0 #d9cdb3,0 20px 40px rgba(0,0,0,.3);width:min(720px,100%);max-height:min(88vh,100%);display:flex;flex-direction:column;overflow:hidden}
+.card h2{margin:0;font-family:Lilita;font-weight:400;font-size:32px;padding:14px 20px 6px;display:flex;align-items:center;gap:10px}
+.card h2 .x{margin-left:auto;width:42px;height:42px;border-radius:14px;border:0;background:#ffdddd;font:inherit;font-size:22px;color:#c43a3a;cursor:pointer;box-shadow:0 3px 0 #e5a9a9}
+.card .body{padding:8px 20px 20px;overflow:auto}
+.sub{color:#6b7488;font-size:14px;margin:0 0 10px}
+.upg{display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;padding:10px 12px;margin-bottom:10px;box-shadow:0 3px 0 #e6dcc6}
+.upg .ic{font-size:30px;width:48px;height:48px;display:grid;place-items:center;background:#f1f6ff;border-radius:14px}
+.upg .t{flex:1;min-width:0}
+.upg .t b{font-size:17px;display:block}
+.upg .t span{font-size:13px;color:#6b7488}
+.bar{height:8px;background:#e7ebf3;border-radius:6px;margin-top:5px;overflow:hidden}.bar i{display:block;height:100%;background:var(--green)}
+.btn{border:0;border-radius:14px;padding:10px 14px;font:inherit;font-size:16px;cursor:pointer;background:var(--green);color:#fff;box-shadow:0 4px 0 #23843a;min-width:112px;white-space:nowrap}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #23843a}
+.btn.off{background:#c8cfdb;box-shadow:0 4px 0 #9aa3b3;cursor:default}
+.btn.max{background:#ffc83a;box-shadow:0 4px 0 #c99312;color:#5a3a00}
+.btn.purple{background:#9b5cff;box-shadow:0 4px 0 #6a34c4}
+.btn.big{font-size:24px;padding:14px 30px;font-family:Lilita;font-weight:400}
+.book{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px}
+.bk{background:#fff;border-radius:16px;padding:6px 6px 8px;text-align:center;box-shadow:0 3px 0 #e6dcc6;border:3px solid transparent}
+.bk img{width:100%;aspect-ratio:4/3;object-fit:contain;display:block}
+.bk .q{width:100%;aspect-ratio:4/3;display:grid;place-items:center;font-size:38px;color:#c9cfda;font-family:Lilita}
+.bk b{font-size:13px;display:block;line-height:1.15;min-height:30px}
+.bk .r{font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.dots{display:flex;justify-content:center;gap:3px;margin-top:4px}.dots i{width:9px;height:9px;border-radius:50%;background:#e3e7ee}
+.tabs{display:flex;gap:8px;margin-bottom:10px}
+.ixRow{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:10px}
+.ix{background:#fff;border-radius:12px;padding:8px 10px;box-shadow:0 3px 0 #e6dcc6;font-size:12px;color:#6b7488}
+.ix b{display:block;font-size:14px}.ix small{display:block;margin-top:4px}.ix.done{outline:3px solid #3fbf58}
+#lb{position:absolute;right:12px;top:12px;background:rgba(20,30,50,.72);color:#fff;border-radius:16px;padding:8px 10px;min-width:190px;font-size:13px;box-shadow:0 3px 0 rgba(0,0,0,.25);cursor:pointer;backdrop-filter:blur(4px)}
+#lb h5{margin:0 0 4px;font-size:13px;color:#ffd84a;font-family:Lilita;font-weight:400;letter-spacing:.5px}
+#lb .r{display:flex;gap:6px;align-items:center;padding:2px 0}#lb .r .n{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}#lb .r .v{color:#7dff8d}
+#lb .r.me{color:#ffd84a}
+#lb.min .r{display:none}#lb.min h5{margin:0}
+body.inmenu #lb{display:none}
+.set{display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:8px;font-size:17px;box-shadow:0 3px 0 #e6dcc6}
+.tog{width:60px;height:34px;border-radius:20px;border:0;background:#c8cfdb;position:relative;cursor:pointer}
+.tog::after{content:'';position:absolute;left:4px;top:4px;width:26px;height:26px;border-radius:50%;background:#fff;transition:left .15s}
+.tog.on{background:var(--green)}.tog.on::after{left:30px}
+#start{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(ellipse at center,rgba(255,255,255,.15),rgba(20,40,20,.55));}
+#start h1{margin:0;font-family:Lilita;font-weight:400;font-size:min(13vw,96px);color:#fff;text-shadow:0 6px 0 #2b7a2a,0 10px 30px rgba(0,0,0,.35);text-align:center;line-height:.95;transform:rotate(-3deg)}
+#start h1 span{display:block;color:#ffd84a;text-shadow:0 6px 0 #b0700a,0 10px 30px rgba(0,0,0,.35)}
+#start p{margin:0;color:#fff;font-size:18px;text-shadow:0 2px 4px rgba(0,0,0,.5);text-align:center;max-width:90vw}
+#loading{position:absolute;inset:0;display:grid;place-items:center;background:#7cc35a;color:#fff;font-family:Lilita;font-size:30px}
+.howto{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.howto div{background:#fff;border-radius:14px;padding:10px;font-size:14px;box-shadow:0 3px 0 #e6dcc6}
+.howto div b{display:block;font-size:22px}
+@media (max-height:520px){#money{font-size:22px}.sbtn{width:54px;height:54px}.sbtn .ic{font-size:22px}#side{gap:6px}}
+
+/* ---------- main menu ---------- */
+body.inmenu #hud,body.inmenu #side,body.inmenu #topc,body.inmenu #prompt,body.inmenu #joy,body.inmenu #jumpBtn,body.inmenu .arrowInd{display:none!important}
+#menu{position:absolute;inset:0;display:grid;grid-template-columns:minmax(300px,380px) 1fr minmax(320px,420px);gap:16px;padding:18px max(18px,env(safe-area-inset-right)) 18px max(18px,env(safe-area-inset-left));pointer-events:none;background:linear-gradient(90deg,rgba(18,40,22,.55),rgba(18,40,22,0) 32%,rgba(18,40,22,0) 66%,rgba(18,40,22,.5))}
+#menu>*{pointer-events:auto}
+.mcol{display:flex;flex-direction:column;gap:12px;min-height:0;align-self:center}
+.logo{margin:0 0 4px;font-family:Lilita;font-weight:400;font-size:clamp(46px,6.2vw,78px);line-height:.9;color:#fff;text-shadow:0 5px 0 #2b7a2a,0 10px 24px rgba(0,0,0,.35);transform:rotate(-3deg);transform-origin:left}
+.logo span{display:block;color:#ffd84a;text-shadow:0 5px 0 #b0700a,0 10px 24px rgba(0,0,0,.35)}
+.mcard{background:rgba(255,250,240,.96);border-radius:20px;padding:14px;box-shadow:0 6px 0 #d9cdb3,0 14px 30px rgba(0,0,0,.25)}
+.mcard label{font-size:13px;color:#6b7488;text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px}
+.nameRow{display:flex;gap:8px}
+#nameIn{flex:1;min-width:0;font:inherit;font-size:20px;padding:10px 14px;border-radius:14px;border:3px solid #e2d8c3;background:#fff;color:var(--ink);outline:none}
+#nameIn:focus{border-color:#3fbf58}
+.iconBtn{width:50px;border:0;border-radius:14px;background:#ffe066;box-shadow:0 4px 0 #d4a414;font-size:22px;cursor:pointer}
+#mPlay{width:100%;font-size:38px;padding:16px;border-radius:20px;background:#3fbf58;box-shadow:0 7px 0 #23843a,0 12px 24px rgba(0,0,0,.25);animation:playPulse 1.6s ease-in-out infinite}
+@keyframes playPulse{50%{transform:scale(1.03)}}
+.mstats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mstats div{background:#fff;border-radius:12px;padding:8px 10px;font-size:13px;color:#6b7488;box-shadow:0 3px 0 #e6dcc6}
+.mstats b{display:block;font-size:18px;color:var(--ink)}
+.mtabs{display:flex;gap:8px}
+.mtabs button{flex:1;border:0;border-radius:14px;padding:10px;font:inherit;font-size:16px;background:rgba(255,255,255,.75);color:var(--ink);cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,.15)}
+.mtabs button.on{background:#fff;box-shadow:0 4px 0 #b9c3d6}
+.mpanel{overflow:auto;max-height:calc(100vh - 96px)}
+.mpanel h4{margin:4px 0 8px;font-size:15px}
+.swatches{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:10px}
+.sw,.hat{position:relative;border:3px solid transparent;border-radius:14px;background:#fff;padding:6px 4px 5px;cursor:pointer;font:inherit;font-size:11px;color:var(--ink);box-shadow:0 3px 0 #e6dcc6;display:flex;flex-direction:column;align-items:center;gap:3px}
+.sw i{width:30px;height:30px;border-radius:50%;display:block;box-shadow:inset 0 -4px 0 rgba(0,0,0,.15)}
+.hat .e{font-size:24px;line-height:30px}
+.sw.on,.hat.on{border-color:#3fbf58}
+.sw.lock,.hat.lock{opacity:.55;cursor:not-allowed}
+.sw.lock::after,.hat.lock::after{content:'🔒';position:absolute;top:2px;right:4px;font-size:12px}
+.hats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.unlockTip{font-size:12px;color:#6b7488;min-height:16px;margin-top:8px}
+.lobby{display:flex;align-items:center;gap:10px;background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:8px;box-shadow:0 3px 0 #e6dcc6}
+.lobby .dot{width:12px;height:12px;border-radius:50%;background:#3fbf58;flex:none}
+.lobby.soon{opacity:.6}.lobby.soon .dot{background:#c8cfdb}
+.lobby b{display:block;font-size:15px}.lobby span{font-size:12px;color:#6b7488}
+.lobby .tag{margin-left:auto;font-size:12px;padding:4px 8px;border-radius:10px;background:#e8f8ec;color:#1f7a34;white-space:nowrap}
+.lobby.soon .tag{background:#eef1f6;color:#6b7488}
+.soonBox{background:linear-gradient(135deg,#5b6cff,#b66bff);color:#fff;border-radius:16px;padding:14px;margin-bottom:12px}
+.soonBox b{font-family:Lilita;font-weight:400;font-size:22px;display:block}
+.soonBox ul{margin:8px 0 0;padding-left:18px;font-size:14px}
+.dragHint{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);color:#fff;font-size:14px;text-shadow:0 2px 4px rgba(0,0,0,.5);pointer-events:none}
+@media (max-height:640px) and (min-width:901px){.mpanel h4{margin:2px 0 5px;font-size:13px}.sw,.hat{padding:4px 3px;font-size:10px}.sw i{width:24px;height:24px}.hat .e{font-size:20px;line-height:24px}.mcard{padding:10px}.mtabs button{padding:7px}.logo{font-size:44px}#mPlay{font-size:30px;padding:10px}}
+@media (max-width:900px),(orientation:portrait){
+  #menu{grid-template-columns:1fr;grid-template-rows:auto 1fr auto;padding-top:max(12px,env(safe-area-inset-top));overflow:auto;background:linear-gradient(180deg,rgba(18,40,22,.45),rgba(18,40,22,0) 30%,rgba(18,40,22,0) 45%,rgba(18,40,22,.55))}
+  .mcol{align-self:start}
+  #menuLeft{order:1}.mspacer{order:2;min-height:28vh}#menuRight{order:3}
+  .logo{font-size:44px;text-align:center;transform:rotate(-2deg);transform-origin:center}
+  .mpanel{max-height:none}
+  #mPlay{font-size:30px;padding:12px}
+  .mstats{grid-template-columns:repeat(4,1fr);gap:6px}.mstats div{padding:5px 6px;font-size:10px}.mstats b{font-size:14px}
+  .mspacer{min-height:36vh}
+  .mcard{padding:10px}
+  #nameIn{font-size:17px;padding:8px 12px}
+  .dragHint{display:none}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ui">
+  <div id="hud">
+    <div class="pill disp" id="money"><span class="coin">$</span><span id="moneyV">0</span></div>
+    <div class="pill" id="income">+$0/s</div>
+    <div class="pill" id="mult" hidden></div>
+    <div class="pill" id="lockPill">🔓 Base unlocked</div>
+    <div class="pill" id="spawnPill"></div>
+    <button class="pill" id="giftPill"></button>
+  </div>
+  <div id="topc"><div id="event" class="disp" hidden></div><div id="alert" class="disp" hidden></div><div id="tut" hidden></div></div>
+  <div id="side">
+    <button class="sbtn shop" id="bShop"><span class="ic">🛒</span>Shop</button>
+    <button class="sbtn" id="bBook"><span class="ic">📖</span>Bug Book<span class="badge" id="bookBadge" hidden>!</span></button>
+    <button class="sbtn" id="bTasks"><span class="ic">📋</span>Tasks<span class="badge" id="taskBadge" hidden>!</span></button>
+    <button class="sbtn reb" id="bReb"><span class="ic">✨</span>Rebirth</button>
+    <button class="sbtn" id="bSet"><span class="ic">⚙️</span>Settings</button>
+  </div>
+  <div id="lb"><h5>🏆 TOP EARNERS</h5><div id="lbRows"></div></div>
+  <div id="toasts"></div>
+  <div id="floats"></div>
+  <button id="prompt" hidden><span class="key" id="pKey">E</span><span id="pText"></span></button>
+  <div id="joy" hidden><div id="joyBase" hidden></div><div id="joyKnob" hidden></div></div>
+  <button id="jumpBtn" hidden>⤒</button>
+  <div class="modal" id="mShop" hidden><div class="card"><h2>🛒 Shop <button class="x" data-close>✕</button></h2><div class="body" id="shopBody"></div></div></div>
+  <div class="modal" id="mBook" hidden><div class="card"><h2>📖 Bug Book <button class="x" data-close>✕</button></h2><div class="body"><p class="sub" id="bookSub"></p><div class="book" id="bookGrid"></div></div></div></div>
+  <div class="modal" id="mReb" hidden><div class="card" style="width:min(480px,100%)"><h2>✨ Rebirth <button class="x" data-close>✕</button></h2><div class="body" id="rebBody"></div></div></div>
+  <div class="modal" id="mSet" hidden><div class="card" style="width:min(460px,100%)"><h2>⚙️ Settings <button class="x" data-close>✕</button></h2><div class="body">
+    <div class="set">🎵 Music <button class="tog" id="tMusic"></button></div>
+    <div class="set">🔊 Sound effects <button class="tog" id="tSfx"></button></div>
+    <div class="set">✨ High quality graphics <button class="tog" id="tHQ"></button></div>
+    <div class="set" style="cursor:pointer" id="sHow">❓ How to play <span>›</span></div>
+    <div class="set" style="cursor:pointer" id="sMenu">🏠 Main menu (name &amp; skins) <span>›</span></div>
+    <div class="set" style="cursor:pointer" id="sReset">🗑️ Reset progress <span>›</span></div>
+  </div></div></div>
+  <div class="modal" id="mHow" hidden><div class="card" style="width:min(620px,100%)"><h2>❓ How to play <button class="x" data-close>✕</button></h2><div class="body">
+    <div class="howto">
+      <div><b>🐞 Buy</b>Beetles crawl down the Bug Trail. Walk up to one and buy it. It goes into your base.</div>
+      <div><b>💰 Earn</b>Every beetle makes money each second. Step on its green pad to collect.</div>
+      <div><b>🦹 Steal</b>Sneak into a rival base, grab a beetle and run home. Don't get caught!</div>
+      <div><b>🔒 Defend</b>Rivals raid your base. Bump into a thief to get your beetle back, or step on LOCK.</div>
+      <div><b>🌧️ Weather</b>Storms and golden hours make rare mutations like Gold, Diamond and Cosmic more common.</div>
+      <div><b>✨ Rebirth</b>Get rich, rebirth, and earn more money forever.</div>
+    </div>
+    <p class="sub" style="margin-top:12px">Move: WASD / arrows / joystick · Action: E / tap the button · Jump: Space · Zoom: mouse wheel</p>
+  </div></div></div>
+  <div class="modal" id="mTasks" hidden><div class="card" style="width:min(520px,100%)"><h2>📋 Tasks <button class="x" data-close>✕</button></h2><div class="body"><p class="sub">Finish tasks for cash. New ones appear as you complete them.</p><div id="taskList"></div></div></div></div>
+  <div class="modal" id="mDaily" hidden><div class="card" style="width:min(560px,100%)"><h2>🗓️ Daily reward</h2><div class="body"><p class="sub" id="dailySub"></p><div class="days" id="dailyDays"></div><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px" id="dailyBtns"></div></div></div></div>
+  <div class="modal" id="mFuse" hidden><div class="card" style="width:min(640px,100%)"><h2>⚗️ Fuse Machine <button class="x" data-close>✕</button></h2><div class="body" id="fuseBody"></div></div></div>
+  <div class="modal" id="mMsg" hidden><div class="card" style="width:min(440px,100%)"><h2 id="msgT"></h2><div class="body" id="msgB"></div></div></div>
+  <div id="menu" hidden>
+    <div class="mcol" id="menuLeft">
+      <h1 class="logo">BEETLE<span>TYCOON</span></h1>
+      <div class="mcard">
+        <label for="nameIn">Your name</label>
+        <div class="nameRow"><input id="nameIn" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Beetle Boss"><button class="iconBtn" id="nameDice" title="Random name">🎲</button></div>
+      </div>
+      <button class="btn big" id="mPlay">▶ PLAY</button>
+      <div class="mstats" id="mStats"></div>
+    </div>
+    <div class="mspacer"></div>
+    <div class="mcol" id="menuRight">
+      <div class="mtabs"><button class="on" data-mtab="skins">🎨 Skins</button><button data-mtab="lobbies">🌐 Lobbies</button></div>
+      <div class="mcard mpanel" id="tabSkins">
+        <h4>Body color</h4><div class="swatches" id="colorGrid"></div>
+        <h4>Hat</h4><div class="hats" id="hatGrid"></div>
+        <h4>Base color</h4><div class="swatches" id="baseGrid"></div>
+        <div class="unlockTip" id="unlockTip"></div>
+      </div>
+      <div class="mcard mpanel" id="tabLobbies" hidden>
+        <div class="soonBox"><b>Public gardens are live!</b>Press Play and you join a garden with up to 4 real players. Empty bases are filled by bots, and if nobody else is online you play against bots.</div>
+        <div class="lobby" id="lobPublic"><i class="dot"></i><div><b>Public garden</b><span id="lobPublicSub">Real players + bots, 4 bases</span></div><span class="tag" id="lobPublicTag">Auto-join</span></div>
+        <div class="lobby soon"><i class="dot"></i><div><b>Play with friends</b><span>Private garden with an invite link</span></div><span class="tag">Coming soon</span></div>
+      </div>
+    </div>
+    <div class="dragHint">Drag to spin your character</div>
+  </div>
+  <div id="start" hidden><h1>BEETLE<span>TYCOON</span></h1><p>Collect shiny beetles, build your base, and steal from your rivals!</p><button class="btn big" id="bPlay">▶ PLAY</button></div>
+  <div id="loading">Loading…</div>
+</div>
+<script src="glb.js"></script><script src="game.js"></script>
+</body>
+</html>
